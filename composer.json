@@ -1,0 +1,24 @@
+{
+    "name": "andresilva/json-datamapping",
+    "description": "Json format of mapping data",
+    "type": "library",
+    "require": {
+        "php": "^8.0 || ^8.1 || ^8.2",
+        "laravel/laravel": "11.x-dev",
+        "symfony/expression-language": "7.1.x-dev"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Andresilva\\JsonDatamapping\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "andre-silvakmm",
+            "email": "andre.silva@kmm.com.br"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
