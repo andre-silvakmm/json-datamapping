@@ -4,7 +4,7 @@
     "type": "library",
     "require": {
         "php": "^8.0 || ^8.1 || ^8.2",
-        "symfony/expression-language": "7.1.x-dev",
+        "symfony/expression-language": "^6.3",
         "illuminate/contracts": "^9.0 || ^10.0"
     },
     "license": "MIT",
