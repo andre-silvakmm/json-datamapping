@@ -10,16 +10,21 @@ class JsonDataMapping
 
     protected $mapping;
     protected $model;
+    public $globalObj;
+    public $currentLoopItem;
 
     public static function make(array $mapping, Model $model)
     {
         $jsonMapping = new JsonDataMapping();
         $jsonMapping->mapping = $mapping;
         $jsonMapping->model = $model;
+        $jsonMapping->globalObj = [];
 
         $obj = [];
         foreach ($mapping as $key => $value) {
             $jsonMapping->checkKeyType($key, $value, $obj, $mapping, $model);
+
+            $jsonMapping->globalObj = $obj;
         }
 
         return $obj;
@@ -35,10 +40,14 @@ class JsonDataMapping
 
         $valueKey = $customDataOption[$key];
 
+        if (in_array($varType[1], array('int', 'float', 'string', 'bool', 'math'))) {
+            $model = $globalModel ? $this->model : $model;
+            $this->getModelAndVar($model, $valueKey);
+            $value = data_get($model, $valueKey, null);
+        }
+
         switch ($varType[1]) {
             case 'int':
-                $value = data_get($globalModel ? $this->model : $model, $valueKey, null);
-
                 if (gettype($value) === 'array') {
                     $val = 0;
                     foreach ($value as $key => $v) {
@@ -51,8 +60,6 @@ class JsonDataMapping
                 $obj[$varType[0]] = (int) $value;
                 break;
             case 'float':
-                $value = data_get($globalModel ? $this->model : $model, $valueKey, null);
-
                 if (gettype($value) === 'array') {
                     $val = 0.0;
                     foreach ($value as $key => $v) {
@@ -65,8 +72,6 @@ class JsonDataMapping
                 $obj[$varType[0]] = (float) $value;
                 break;
             case 'string':
-                $value = data_get($globalModel ? $this->model : $model, $valueKey, null);
-
                 if (gettype($value) === 'array') {
                     $val = '';
                     foreach ($value as $key => $v) {
@@ -89,8 +94,6 @@ class JsonDataMapping
                 $obj[$varType[0]] = (string) $value;
                 break;
             case 'bool':
-                $value = data_get($globalModel ? $this->model : $model, $valueKey, null);
-
                 $obj[$varType[0]] = (bool) $value;
                 break;
             case 'object':
@@ -157,8 +160,6 @@ class JsonDataMapping
                 $obj[$varType[0]] = [];
                 $math = $varType[2];
 
-                $value = data_get($globalModel ? $this->model : $model, $valueKey, null);
-
                 if (gettype($value) === 'array') {
                     $val = [];
                     foreach ($value as $key => $v) {
@@ -179,7 +180,11 @@ class JsonDataMapping
 
                 $v = [];
                 foreach ($vars as $key => $var) {
-                    $v[$key] =  data_get($this->model, $var, null);
+                    $model = $this->model;
+
+                    $this->getModelAndVar($model, $var);
+
+                    $v[$key] =  data_get($model, $var, null);
                 }
 
                 $expressionLanguage = new ExpressionLanguage();
@@ -229,6 +234,7 @@ class JsonDataMapping
                 break;
         }
 
+        $this->globalObj = $obj;
         return $obj;
     }
 
@@ -236,12 +242,31 @@ class JsonDataMapping
     {
         if ($dataItem instanceof \Illuminate\Database\Eloquent\Collection) {
             foreach ($dataItem as $subDataItem) {
+                $this->currentLoopItem = $subDataItem;
+
                 $this->iterateArray($subDataItem, $mapping, $o);
             }
         } else {
             foreach ($mapping as $keyMap => $mapItem) {
+                $this->currentLoopItem = $dataItem;
+
                 $this->checkKeyType($keyMap, $mapItem, $o, $mapping, $dataItem, false);
             }
+        }
+    }
+
+    private function getModelAndVar(&$model, &$var)
+    {
+        if (str_contains($var, '$loop')) {
+            $var = str_replace('$loop', 'currentLoopItem', $var);
+
+            $model = $this;
+        }
+
+        if (str_contains($var, '$root')) {
+            $model = [
+                '$root' => $this->globalObj
+            ];
         }
     }
 }
