@@ -40,6 +40,10 @@ class JsonDataMapping
 
         $valueKey = $customDataOption[$key];
 
+        if (gettype($valueKey) !== 'string' && $varType[1] === 'string') {
+            throw new \Exception("Tipo de variavel para o item $varType[0] ausente ou incompatível com valor informado");
+        }
+
         if (in_array($varType[1], array('int', 'float', 'string', 'bool', 'math'))) {
             $model = $globalModel ? $this->model : $model;
             $this->getModelAndVar($model, $valueKey);
@@ -115,8 +119,16 @@ class JsonDataMapping
             case 'array':
                 $obj[$varType[0]] = [];
 
-                $datasource = $valueKey['datasource'];
-                $mapping = $valueKey['mapping'];
+                $datasource = data_get($valueKey, 'datasource', null);
+                $mapping = data_get($valueKey, 'mapping', null);
+
+                if ($datasource === null) {
+                    throw new \Exception('datasource não informado para tipo array do item ' . $varType[0]);
+                }
+
+                if ($mapping === null) {
+                    throw new \Exception('mapping não informado para tipo array do item ' . $varType[0]);
+                }
 
                 $data = data_get($globalModel ? $this->model : $model, $datasource, null) ?? [];
 
