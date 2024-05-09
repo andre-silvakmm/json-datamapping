@@ -13,7 +13,7 @@ class JsonDataMapping
     public $globalObj;
     public $currentLoopItem;
 
-    public static function make(array $mapping, Model $model)
+    public static function make(array $mapping, $model)
     {
         $jsonMapping = new JsonDataMapping();
         $jsonMapping->mapping = $mapping;
