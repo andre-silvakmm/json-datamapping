@@ -188,7 +188,16 @@ class JsonDataMapping
                 $obj[$varType[0]] = [];
 
                 // obtem variaveis decladas da expressao
-                $vars = $valueKey['vars'];
+                $vars = data_get($valueKey, 'vars', null); // $valueKey['vars'];
+                if ($vars === null) {
+                    throw new \Exception('vars não informado para tipo expr do item ' . $varType[0]);
+                }
+                $expr = data_get($valueKey, 'expr', null);
+                if ($expr === null) {
+                    throw new \Exception('expr não informado para tipo expr do item ' . $varType[0]);
+                }
+
+                $returnType = data_get($valueKey, 'returnType', null);
 
                 $v = [];
                 foreach ($vars as $key => $var) {
@@ -201,6 +210,23 @@ class JsonDataMapping
 
                 $expressionLanguage = new ExpressionLanguage();
                 $res = $expressionLanguage->evaluate($valueKey['expr'], $v);
+
+                if ($returnType !== null) {
+                    switch ($returnType) {
+                        case 'string':
+                            $res = (string) $res;
+                            break;
+                        case 'int':
+                            $res = (int) $res;
+                            break;
+                        case 'float':
+                            $res = (float) $res;
+                            break;
+                        case 'bool':
+                            $res = (bool) $res;
+                            break;
+                    }
+                }
 
                 // verifica se existe extrator
                 if (array_key_exists('extract', $valueKey)) {
