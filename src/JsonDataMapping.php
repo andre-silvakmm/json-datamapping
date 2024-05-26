@@ -2,7 +2,9 @@
 
 namespace Andresilva\JsonDatamapping;
 
+use Andresilva\JsonDatamapping\Exceptions\MappingException;
 use Illuminate\Database\Eloquent\Model;
+use RuntimeException;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 class JsonDataMapping
@@ -208,8 +210,15 @@ class JsonDataMapping
                     $v[$key] =  data_get($model, $var, null);
                 }
 
-                $expressionLanguage = new ExpressionLanguage();
-                $res = $expressionLanguage->evaluate($valueKey['expr'], $v);
+                try {
+                    $expressionLanguage = new ExpressionLanguage();
+                    $res = $expressionLanguage->evaluate($valueKey['expr'], $v);
+                } catch (RuntimeException $e) {
+                    $node = $varType[0] . ':' . $varType[1];
+                    $exception = json_encode($valueKey);
+                    throw new MappingException("Erro de mapeamento encontrado em nó $node: <br/>" . $e->getMessage() . "<br/>$exception");
+                }
+
 
                 if ($returnType !== null) {
                     switch ($returnType) {
